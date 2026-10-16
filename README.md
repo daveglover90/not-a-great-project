@@ -59,6 +59,23 @@ To push it into the Snyk UI:
 snyk aibom --upload --repo https://github.com/daveglover90/not-a-great-project
 ```
 
+### Known issue: `--html` graph fails to render
+
+The local HTML viewer may show a blank graph with:
+
+```
+Internal error: Error: No such layout `dagre` found. Did you forget to import it and `cytoscape.use()` it?
+```
+
+This is a bug in Snyk's generated HTML viewer (its `dagre` graph-layout plugin fails to
+register), **not** a problem with the scan — the AI-BOM data is complete. Workarounds:
+
+- Click **Show JSON** in the viewer to see the full CycloneDX AI-BOM (models, dataset, MCP chain).
+- Or `snyk aibom --json-file-output aibom.json` for the raw output.
+- **Best for a demo:** `snyk aibom --upload --repo <url>` and view the graph in the Snyk UI
+  (app.snyk.io), which renders server-side and isn't affected by this bug.
+- Reloading in a different browser sometimes works (the viewer pulls the layout script from a CDN).
+
 ## Part 2 — Snyk Agent Scan (MCP servers + skills)
 
 Agent Scan (formerly MCP-Scan) inspects MCP configs and `SKILL.md` files for prompt
