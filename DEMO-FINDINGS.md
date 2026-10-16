@@ -5,12 +5,36 @@ A one-glance reference for presenting. Everything below is intentional; see
 
 ## The demo arc
 
-1. **`snyk aibom`** → builds the inventory: models, datasets, MCP clients/servers/tools (~54 assets).
-2. **Snyk platform (Evo UI → Inventory → Repos → this repo)** → scores the skills, MCP servers, and models against policy, with line-level evidence. This is the deeper AI-security analysis the CLI alone doesn't print; it populates a few minutes after upload.
-3. **`uvx snyk-agent-scan@latest .claude/skills`** → the same skill/MCP detection, shift-left, before anything is committed.
+1. **`snyk aibom`** → builds the **inventory only**: models, datasets, MCP clients/servers/tools (~54 assets). No issues printed — it's an inventory command, not a test.
+2. **`snyk aibom test --enriched`** → builds the inventory **and tests it against your org's Evo policies**, printing the same issues (severity, description, remediation) the platform shows. This is the CLI path that matches the UI.
+3. **Snyk platform (Evo UI → Inventory → Repos → this repo)** → the same policy evaluation, continuously, with line-level evidence in the browser.
+4. **`uvx snyk-agent-scan@latest .claude/skills`** → skill/MCP detection, shift-left, before anything is committed.
 
-> Timing note: right after upload the repo may show only 1 issue; the skill, MCP, and
-> model findings appear once the platform finishes analyzing. Give it a few minutes and refresh.
+> Timing note: right after an `aibom --upload`, the repo may show only 1 issue; the skill, MCP,
+> and model findings appear once the platform finishes analyzing. Give it a few minutes and refresh.
+
+## Why the platform showed more issues than the CLI (and how to match them)
+
+Plain **`snyk aibom`** only emits the **inventory** — it does not run the policy/issue
+detection, which is why the terminal output had assets but no findings. The issues
+(prompt injection in skills/MCP, model supply-chain-poisoning) come from evaluating that
+inventory against your org's **Evo policies**, which happens server-side on the platform.
+
+To reproduce the platform's findings locally, run the **`test`** subcommand:
+
+```bash
+snyk aibom test --enriched            # inventory + Evo policy test = matching issue list
+snyk aibom test --enriched --severity-threshold=high   # only the loud ones
+```
+
+- `aibom` = inventory. `aibom test` = inventory **+** policy evaluation (the issues).
+- `--enriched` = extra enrichment for a *more complete inventory* before the test (slower).
+  It improves completeness; it is **not** the switch that turns detection on — running `test` is.
+- Results depend on which **Evo policies** your org has enabled, so the CLI `test` invokes
+  the same server-side policies rather than detecting purely offline.
+
+**Say on stage:** "`snyk aibom` inventories; `snyk aibom test` scores that inventory against our
+Evo policies — same engine the platform uses, just run from the CLI / CI."
 
 ## The headline: three asset types, three risk classes, one repo
 
@@ -97,9 +121,9 @@ and lockfiles; apply dependency scanning before merging model-generated changes.
 
 ## Framing cautions (so a deep question doesn't derail you)
 
-- The platform **enriches and continuously scans** the uploaded inventory — frame the CLI-vs-platform
-  split as "shift-left with the CLI, govern continuously in the platform," rather than asserting a
-  precise internal mechanism for which path produced each finding.
+- The CLI-vs-platform gap is **inventory vs. policy test**, not a scanner-quality difference:
+  `snyk aibom` inventories, `snyk aibom test` (optionally `--enriched`) runs the Evo policies the
+  platform runs. Frame it as "shift-left with `aibom test` in CI, govern continuously in the platform."
 - Model findings are **risk ratings**, not breach indicators.
 - MCP occurrence anchors sit on the decorator/`def`; the injection is in the **docstring**.
 - Line numbers for the `<system>` block are approximate (it spans several lines); re-check against
