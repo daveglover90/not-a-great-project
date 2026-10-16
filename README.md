@@ -1,3 +1,9 @@
+> # ⚠️ Security demo — contains intentionally unsafe content
+> This repo deliberately includes prompt-injection, tool-poisoning, and fake-exfiltration
+> strings so the Snyk scanners have real findings. It is inert (outbound hosts are reserved
+> `.invalid` domains) but **must not be installed into a live agent or editor**. See
+> [`SECURITY-DEMO.md`](SECURITY-DEMO.md).
+
 # Snyk AI Demo — models, MCP, and agent skills in one repo
 
 A deliberately-built Python project that packs all three of the things Snyk's AI tooling
